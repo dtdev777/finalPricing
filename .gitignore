@@ -1,0 +1,40 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv
+venv
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Generated data and logs (only data/sample is versioned)
+data/raw/*
+data/clean/*
+data/features/*
+data/quarantine/*
+data/seed/
+!data/**/.gitkeep
+logs/*
+!logs/.gitkeep
+src/models/saved/
+
+# Course material and binaries
+*.pdf
+*.pptx
+*.docx
+*.zip
+chromedriver*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

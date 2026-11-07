@@ -1,0 +1,16 @@
+.env
+.env.*
+.git
+.gitignore
+.gitattributes
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+data
+logs
+notebooks
+docs
+tests
+scripts
+README.md

@@ -1,0 +1,30 @@
+[project]
+name = "finalpricing"
+version = "0.1.0"
+description = "End-to-end iPhone price intelligence for the Vietnamese retail market"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "fastapi",
+    "pandas",
+    "psycopg[binary]",
+    "pymongo",
+    "python-dotenv",
+    "requests",
+    "sqlalchemy",
+    "streamlit",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = [
+    "httpx",
+    "pytest",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
