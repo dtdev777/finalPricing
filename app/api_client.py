@@ -18,3 +18,12 @@ def get_json(path: str, **params: Any) -> Any:
     except requests.RequestException as exc:
         raise ApiError(str(exc)) from exc
     return response.json()
+
+
+def post_json(path: str, payload: dict[str, Any]) -> Any:
+    try:
+        response = requests.post(f"{API_BASE_URL}{path}", json=payload, timeout=60)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise ApiError(str(exc)) from exc
+    return response.json()

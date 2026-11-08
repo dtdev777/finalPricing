@@ -60,6 +60,9 @@ services:
     environment:
       <<: *postgres-env
       OWN_STORE: ${OWN_STORE:-FPT Shop}
+      # Optional: without a key the assistant uses rules only.
+      OPENAI_TOKEN_API_KEY: ${OPENAI_TOKEN_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:

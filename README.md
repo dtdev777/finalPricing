@@ -80,7 +80,17 @@ New-Item -ItemType Junction -Path .venv -Target $venv | Out-Null
 | `GET /api/v1/products/{match_key}/history` | Daily price history |
 | `GET /api/v1/alerts` | Price alerts, most severe first |
 | `GET /api/v1/forecasts/{match_key}` | Stored forecasts |
+| `POST /api/v1/assistant` | Answer to a price question |
 | `GET /api/v1/pipeline/runs` | Recent pipeline runs |
+
+## AI Assistant
+
+The dashboard's assistant answers four kinds of questions, in English or Vietnamese: the cheapest store, store comparisons, forecasts and alerts.
+
+- **Rules** always work. Keywords pick the question type, and the model, capacity and store are parsed from the text.
+- **LLM (optional).** If `OPENAI_TOKEN_API_KEY` is set, an OpenAI model (`OPENAI_MODEL`, default `gpt-5.4-nano`) parses the question instead. It only fills in the query fields; it never writes SQL or produces numbers. If the call fails, the assistant falls back to the rules.
+
+Every number in an answer comes from PostgreSQL. The key is passed to the API container only.
 
 ## Scheduling
 

@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import streamlit as st
 
-from api_client import ApiError, get_json
+from api_client import ApiError, get_json, post_json
 
 OWN_STORE = os.getenv("OWN_STORE", "FPT Shop")
 REFRESH_SECONDS = int(os.getenv("DASHBOARD_REFRESH_SECONDS", "60"))
@@ -44,3 +44,23 @@ def render() -> None:
 
 
 render()
+
+st.subheader("AI Assistant")
+st.caption("Ask about the cheapest store, store comparisons, forecasts or alerts. English or Vietnamese.")
+history = st.session_state.setdefault("chat", [])
+for message in history:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+if question := st.chat_input("Where is iPhone 16 128GB cheapest?"):
+    history.append({"role": "user", "content": question})
+    with st.chat_message("user"):
+        st.markdown(question)
+    try:
+        reply = post_json("/api/v1/assistant", {"question": question})
+        content = f"{reply['answer']}\n\n_Answered by: {reply['engine']}_"
+    except ApiError as exc:
+        content = f"Assistant unavailable: {exc}"
+    history.append({"role": "assistant", "content": content})
+    with st.chat_message("assistant"):
+        st.markdown(content)

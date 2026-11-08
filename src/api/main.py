@@ -4,10 +4,12 @@ from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import OperationalError
 
 from config.settings import own_store
+from src.api import assistant
 from src.api.db import get_connection
 
 app = FastAPI(title="finalPricing API", version="0.1.0")
@@ -144,6 +146,15 @@ def forecasts(conn: Db, match_key: str, store: str | None = None) -> list[dict[s
         match_key=match_key,
         store=store,
     )
+
+
+class Question(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+
+
+@app.post("/api/v1/assistant")
+def ask_assistant(conn: Db, body: Question) -> dict[str, Any]:
+    return assistant.ask(conn, body.question)
 
 
 @app.get("/api/v1/pipeline/runs")
