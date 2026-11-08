@@ -15,7 +15,7 @@ STORE_ALIASES = {
 }
 
 _MODEL = re.compile(
-    r"(?:\b(?:iphone|ip)\s*|\b)(?:(1[1-9])(e)?(?![0-9])|(air)\b)\s*(pro\s*max|pro|plus|mini)?"
+    r"(?:\b(?:iphone|ip)\s*|\b)(?:(1[1-9])(e)?(?![0-9])|(air)\b)\s*(?:(pro\s*max|pm|pro|plus|mini)(?![a-z]))?"
 )
 _CAPACITY = re.compile(r"(?<![0-9])(\d{2,4}|[12])\s*(gb|tb)\b")
 # People often drop the unit: "16 pro 256".
@@ -38,7 +38,8 @@ def parse_model(text: str) -> str | None:
     number, e_suffix, air, variant = match.groups()
     parts = ["iphone", air or f"{number}{e_suffix or ''}"]
     if variant:
-        parts.append("pro-max" if variant.startswith("pro") and variant.endswith("max") else variant)
+        is_pro_max = variant == "pm" or (variant.startswith("pro") and variant.endswith("max"))
+        parts.append("pro-max" if is_pro_max else variant)
     return "-".join(parts)
 
 

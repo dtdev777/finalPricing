@@ -87,12 +87,13 @@ New-Item -ItemType Junction -Path .venv -Target $venv | Out-Null
 
 ## AI Assistant
 
-The dashboard's assistant answers four kinds of questions, in English or Vietnamese: the cheapest store, store comparisons, forecasts and alerts.
+The dashboard's assistant answers price questions in English or Vietnamese. Both engines use the same read-only queries in `src/api/queries.py`.
 
-- **Rules** always work. Keywords pick the question type, and the model, capacity and store are parsed from the text.
-- **LLM (optional).** If `OPENAI_TOKEN_API_KEY` is set, an OpenAI model (`OPENAI_MODEL`, default `gpt-5.4-nano`) parses the question instead. It only fills in the query fields; it never writes SQL or produces numbers. If the call fails, the assistant falls back to the rules.
+- **LLM router (optional).** If `OPENAI_TOKEN_API_KEY` is set, an OpenAI model (`OPENAI_MODEL`, default `gpt-5.4-mini`) chooses which queries to call: `latest_prices`, `price_history`, `price_changes`, `forecasts`, `alerts`, `market_position` and `catalog`. It then writes the answer in the question's language. It never writes SQL.
+- **Number check.** Every number of 10,000 or more in an LLM answer must appear in the query results. If one does not, the model is asked to rewrite once; if it still fails, the rules answer is returned.
+- **Rules** always work and are the fallback for any LLM error. Keywords pick one of four question types (cheapest store, comparison, forecast, alerts) and a fixed English template formats the answer.
 
-Every number in an answer comes from PostgreSQL. The key is passed to the API container only.
+The key is passed to the API container only.
 
 ## Scheduling
 
