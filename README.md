@@ -87,10 +87,10 @@ New-Item -ItemType Junction -Path .venv -Target $venv | Out-Null
 `scripts/run_daily.ps1` starts Docker if needed, brings the stack up and runs the pipeline. Register it once, from a normal PowerShell window:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -At 07:00
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -VietnamTime 07:00
 ```
 
-A missed run starts as soon as the machine is available. Logs are written to `logs/`.
+The job runs daily at 07:00 Vietnam time, converted to the machine's clock. Re-run the script if the machine's time zone or daylight saving changes. A missed run starts as soon as the machine is available. Logs are written to `logs/`.
 
 ## Project layout
 

@@ -1,16 +1,23 @@
 # Registers the daily Windows Task Scheduler job for the current user.
 param(
     [string]$TaskName = "finalPricing-daily",
-    [string]$At = "07:00"
+    [string]$VietnamTime = "07:00"
 )
 
 $root = Split-Path -Parent $PSScriptRoot
 $script = Join-Path $PSScriptRoot "run_daily.ps1"
 
+# Task Scheduler uses the machine's clock, so convert from Vietnam time.
+# Re-run this script if the machine's time zone or daylight saving changes.
+$vietnam = [TimeZoneInfo]::FindSystemTimeZoneById("SE Asia Standard Time")
+$timeOfDay = [datetime]::ParseExact($VietnamTime, "HH:mm", $null).TimeOfDay
+$vietnamStart = [datetime]::SpecifyKind((Get-Date).Date.Add($timeOfDay), "Unspecified")
+$localStart = [TimeZoneInfo]::ConvertTime($vietnamStart, $vietnam, [TimeZoneInfo]::Local)
+
 $action = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$script`"" `
     -WorkingDirectory $root
-$trigger = New-ScheduledTaskTrigger -Daily -At $At
+$trigger = New-ScheduledTaskTrigger -Daily -At $localStart
 # StartWhenAvailable runs a missed job as soon as the laptop is back on.
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -21,4 +28,4 @@ $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" 
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
     -Settings $settings -Principal $principal -Force | Out-Null
-Write-Output "Registered $TaskName, daily at $At"
+Write-Output ("Registered {0}: daily at {1} Vietnam time ({2:HH:mm} on this machine)" -f $TaskName, $VietnamTime, $localStart)
