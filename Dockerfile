@@ -16,6 +16,7 @@ RUN uv sync --frozen --no-dev --no-cache
 COPY config ./config
 COPY src ./src
 COPY app ./app
+COPY .streamlit ./.streamlit
 
 RUN useradd --create-home --uid 1000 appuser \
     && mkdir -p data logs \

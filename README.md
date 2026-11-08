@@ -85,6 +85,15 @@ New-Item -ItemType Junction -Path .venv -Target $venv | Out-Null
 | `POST /api/v1/assistant` | Answer to a price question |
 | `GET /api/v1/pipeline/runs` | Recent pipeline runs |
 
+## Dashboard
+
+The dashboard has four tabs and refreshes every `DASHBOARD_REFRESH_SECONDS`:
+
+- **Market:** headline cards, a chart of where the reference store sits against the market median, and a price table by store with the lowest price highlighted.
+- **Price history:** daily prices per store for one product, with the stored forecast as a dashed line and range.
+- **Alerts:** price alerts as cards, filtered by severity.
+- **Assistant:** chat with example questions.
+
 ## AI Assistant
 
 The dashboard's assistant answers price questions in English or Vietnamese. Both engines use the same read-only queries in `src/api/queries.py`.
@@ -108,6 +117,7 @@ The job runs daily at 07:00 Vietnam time, converted to the machine's clock, unti
 ## Project layout
 
 ```text
+.streamlit/  Dashboard theme (light and dark)
 app/         Streamlit dashboard
 config/      Settings read from the environment
 data/        Local data, only data/sample is versioned
