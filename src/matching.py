@@ -25,7 +25,7 @@ _BARE_CAPACITY = re.compile(r"(?<![0-9])(64|128|256|512)(?![0-9])")
 def normalize_text(value: str) -> str:
     """Lowercase and strip Vietnamese accents so accented and plain spellings match."""
     # U+0111 (d with stroke) has no Unicode decomposition, so replace it explicitly.
-    value = value.lower().replace("đ", "d")
+    value = value.lower().replace("\u0111", "d")
     decomposed = unicodedata.normalize("NFD", value)
     return " ".join("".join(c for c in decomposed if not unicodedata.combining(c)).split())
 
