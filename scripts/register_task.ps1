@@ -1,7 +1,9 @@
 # Registers the daily Windows Task Scheduler job for the current user.
 param(
     [string]$TaskName = "finalPricing-daily",
-    [string]$VietnamTime = "07:00"
+    [string]$VietnamTime = "07:00",
+    # Last day the job runs (yyyy-MM-dd). The task expires after that day.
+    [string]$EndDate = "2026-12-08"
 )
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -18,6 +20,8 @@ $action = New-ScheduledTaskAction -Execute "powershell.exe" `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$script`"" `
     -WorkingDirectory $root
 $trigger = New-ScheduledTaskTrigger -Daily -At $localStart
+$lastDay = [datetime]::ParseExact($EndDate, "yyyy-MM-dd", $null)
+$trigger.EndBoundary = $lastDay.AddDays(1).AddSeconds(-1).ToString("s")
 # StartWhenAvailable runs a missed job as soon as the laptop is back on.
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -28,4 +32,4 @@ $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" 
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
     -Settings $settings -Principal $principal -Force | Out-Null
-Write-Output ("Registered {0}: daily at {1} Vietnam time ({2:HH:mm} on this machine)" -f $TaskName, $VietnamTime, $localStart)
+Write-Output ("Registered {0}: daily at {1} Vietnam time ({2:HH:mm} on this machine), last run on {3}" -f $TaskName, $VietnamTime, $localStart, $EndDate)

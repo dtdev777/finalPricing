@@ -30,6 +30,8 @@ Ports bind to `127.0.0.1` only.
 
 ## Quick start
 
+Full setup, scheduling and troubleshooting are in [DEPLOYMENT.md](DEPLOYMENT.md).
+
 Requirements: Docker Desktop and [uv](https://docs.astral.sh/uv/).
 
 ```powershell
@@ -97,10 +99,10 @@ Every number in an answer comes from PostgreSQL. The key is passed to the API co
 `scripts/run_daily.ps1` starts Docker if needed, brings the stack up and runs the pipeline. Register it once, from a normal PowerShell window:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -VietnamTime 07:00
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -VietnamTime 07:00 -EndDate 2026-12-08
 ```
 
-The job runs daily at 07:00 Vietnam time, converted to the machine's clock. Re-run the script if the machine's time zone or daylight saving changes. A missed run starts as soon as the machine is available. Logs are written to `logs/`.
+The job runs daily at 07:00 Vietnam time, converted to the machine's clock, until 8 December 2026. Re-run the script if the machine's time zone or daylight saving changes. A missed run starts as soon as the machine is available. Logs are written to `logs/`.
 
 ## Project layout
 
