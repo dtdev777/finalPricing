@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parents[1]
 LOG_DIR = BASE_DIR / "logs"
 RAW_DIR = BASE_DIR / "data" / "raw"
+# Course data, downloaded by hand and never committed (data/seed is in .gitignore).
+SEED_DIR = BASE_DIR / "data" / "seed" / "teacher"
 
 load_dotenv(BASE_DIR / ".env")
 
@@ -20,7 +22,7 @@ def _required(name: str) -> str:
 
 
 def own_store() -> str:
-    return os.getenv("OWN_STORE", "FPT Shop")
+    return os.getenv("OWN_STORE", "CellphoneS")
 
 
 def postgres_url() -> str:

@@ -1,5 +1,6 @@
 import math
 
+import pandas as pd
 import pytest
 
 from app import ui
@@ -68,6 +69,14 @@ def test_price_matrix_and_position_summary():
     assert summary["cheapest"] == 1
     assert summary["above_median"] == 0
     assert summary["price_index"] == pytest.approx(99.6, abs=0.05)
+
+
+def test_gap_segments_start_a_new_segment_after_a_missing_day():
+    history = pd.DataFrame({
+        "store": ["A", "A", "A", "B", "A"],
+        "crawl_date": pd.to_datetime(["2026-10-01", "2026-10-02", "2026-10-30", "2026-10-01", "2026-11-09"]),
+    })
+    assert list(ui.gap_segments(history)) == [0, 0, 1, 0, 2]
 
 
 def test_price_matrix_empty():

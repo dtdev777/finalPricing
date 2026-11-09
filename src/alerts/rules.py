@@ -111,8 +111,11 @@ def run(engine: Engine, crawl_date: date) -> None:
         )
         alerts = price_change_alerts(today, previous, crawl_date)
         alerts += undercut_alerts(today, previous, crawl_date, own_store())
+        # A re-run replaces the day's alerts but keeps the ones someone already acknowledged.
+        conn.execute(
+            text("DELETE FROM price_alerts WHERE crawl_date = :day AND NOT acknowledged"), {"day": crawl_date}
+        )
         if alerts:
-            # Upsert, so a re-run keeps the acknowledged flag of alerts already raised today.
             conn.execute(
                 text("""
                     INSERT INTO price_alerts (crawl_date, alert_type, severity, store, product_match_key,

@@ -7,7 +7,7 @@ import pandas as pd
 DONG = "\u20ab"
 
 # Fixed store order, so a store keeps its chart color whatever the filters show.
-STORES = ["FPT Shop", "CellphoneS", "TGDD", "Hoang Ha Mobile", "TopZone", "Viettel Store", "MobileCity", "Apple Store"]
+STORES = ["CellphoneS", "FPT Shop", "TGDD", "Hoang Ha Mobile", "TopZone", "Viettel Store", "MobileCity", "Apple Store"]
 STORE_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
 OTHER_COLOR = "#8a8a85"
 
@@ -75,6 +75,14 @@ def store_columns(matrix: pd.DataFrame, own_store: str) -> list[str]:
 
 def store_colors(stores: list[str]) -> list[str]:
     return [STORE_COLORS[STORES.index(store)] if store in STORES else OTHER_COLOR for store in stores]
+
+
+def gap_segments(history: pd.DataFrame, max_gap_days: int = 1) -> pd.Series:
+    """Number each run of consecutive crawl days per store, so a chart line stops at a gap
+    instead of drawing prices for days that were never crawled."""
+    ordered = history.sort_values(["store", "crawl_date"])
+    gaps = ordered.groupby("store")["crawl_date"].diff() > pd.Timedelta(days=max_gap_days)
+    return gaps.groupby(ordered["store"]).cumsum().reindex(history.index)
 
 
 def price_matrix(products: list[dict[str, Any]], own_store: str) -> pd.DataFrame:

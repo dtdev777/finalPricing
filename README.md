@@ -1,8 +1,10 @@
 # finalPricing
 
-End-to-end price intelligence for iPhones sold by Vietnamese retailers. The project tracks competitor prices, measures where the reference retailer (FPT Shop) sits in the market, and raises alerts when prices move.
+End-to-end price intelligence for iPhones sold by Vietnamese retailers. The project tracks competitor prices, measures where the reference retailer (CellphoneS, set by `OWN_STORE`) sits in the market, and raises alerts when prices move.
 
-> **Status:** the daily pipeline crawls CellphoneS, Hoang Ha Mobile and MobileCity, cleans and loads the prices, computes market positions and raises alerts. FPT Shop is not crawled yet (see [Data sources](#data-sources)). Forecasting is in progress.
+> **Status:** the daily pipeline crawls CellphoneS, Hoang Ha Mobile and MobileCity, cleans and loads the prices, computes market positions and raises alerts. Price history from 8 September 2026 comes from the course's 8-store data. Forecasting is in progress.
+>
+> The reference retailer was FPT Shop until FPT started blocking crawlers (see [Data sources](#data-sources)). CellphoneS replaced it because it can be crawled every day and has the longest clean history.
 
 ## Architecture
 
@@ -70,6 +72,15 @@ Price changes need two crawl days, so the first run raises no alerts.
 | Hoang Ha Mobile | Paged iPhone category | One card per model at its default capacity |
 | MobileCity | Category, "Xem them" pages, then the variant list on each product page | One record per capacity, lowest price across colors |
 | FPT Shop | Not crawled | Every request, including `robots.txt`, gets a Cloudflare bot challenge. The crawler does not try to get around it. |
+| Course data (8 stores) | `src/pipeline/seed.py`, run once | 19,410 records from 8 September to 30 October 2026, loaded with `data_origin = 'teacher_seed'` |
+
+The course data is not in this repository. Download the 8 JSON files from the course's MongoDB link into `data/seed/teacher/`, which git ignores, then run:
+
+```powershell
+docker compose --profile jobs run --rm pipeline python -m src.pipeline.seed
+```
+
+It goes through the same cleaning rules as the daily crawl. About half the records are quarantined, mostly prices above 120 million VND, which are crawl errors that cannot be repaired. Market positions and alerts are rebuilt for every loaded day, so alerts before 9 November are a replay of the history, not alerts raised at the time.
 
 Crawlers read `robots.txt`, wait at least 1.5 seconds between requests and stop when a site answers with a bot challenge.
 

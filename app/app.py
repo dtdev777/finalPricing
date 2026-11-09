@@ -9,7 +9,7 @@ import streamlit as st
 import ui
 from api_client import ApiError, get_json, post_json
 
-OWN_STORE = os.getenv("OWN_STORE", "FPT Shop")
+OWN_STORE = os.getenv("OWN_STORE", "CellphoneS")
 REFRESH_SECONDS = int(os.getenv("DASHBOARD_REFRESH_SECONDS", "60"))
 
 EXAMPLES = [
@@ -209,7 +209,7 @@ def history_chart(history: pd.DataFrame, forecast: pd.DataFrame) -> alt.LayerCha
         sort=stores,
         legend=alt.Legend(title=None, orient="bottom"),
     )
-    history = history.assign(price_text=history["price"].map(ui.vnd))
+    history = history.assign(price_text=history["price"].map(ui.vnd), segment=ui.gap_segments(history))
     base = alt.Chart(history).encode(
         x=alt.X("crawl_date:T", title=None, axis=alt.Axis(format="%d/%m")),
         y=alt.Y(
@@ -222,6 +222,7 @@ def history_chart(history: pd.DataFrame, forecast: pd.DataFrame) -> alt.LayerCha
     )
     nearest = alt.selection_point(nearest=True, on="pointerover", fields=["crawl_date"], empty=False)
     lines = base.mark_line(interpolate="step-after").encode(
+        detail="segment:N",
         strokeWidth=alt.condition(alt.datum.store == OWN_STORE, alt.value(3), alt.value(1.5))
     )
     points = base.mark_point(filled=True, size=70).encode(
@@ -276,7 +277,9 @@ def history_tab() -> None:
         return
 
     controls = st.container(horizontal=True, vertical_alignment="bottom")
-    keys = list(matrix["product_match_key"])
+    # Products the reference store sells come first, so the default view has its line.
+    sold = matrix[OWN_STORE].notna() if OWN_STORE in matrix else pd.Series(False, index=matrix.index)
+    keys = list(matrix.loc[sold, "product_match_key"]) + list(matrix.loc[~sold, "product_match_key"])
     key = controls.selectbox("Product", keys, format_func=ui.product_label, key="history_product", width=320)
     span = controls.segmented_control("Range", list(HISTORY_RANGES), default="90 days", key="history_range", required=True)
 

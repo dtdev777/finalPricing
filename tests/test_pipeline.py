@@ -8,6 +8,7 @@ from src.crawlers import cellphones, hoanghamobile, mobilecity
 from src.crawlers.base import parse_price
 from src.matching import in_scope, is_new_vna, parse_model
 from src.pipeline.analytics import market_rows, price_position
+from src.pipeline import seed
 from src.pipeline.clean import clean_records
 
 NOW = "2026-11-09T00:00:00+00:00"
@@ -84,6 +85,27 @@ def test_mobilecity_single_price_without_storage_uses_smallest_spec_capacity():
     assert (item["product_id"], item["capacity"], item["price"]) == ("3031-256gb", "256gb", 25_050_000)
 
 
+@pytest.mark.parametrize(
+    ("value", "amount"),
+    [("38690000.00", 38_690_000), ("38.990.000d", 38_990_000), ("77,190,000 VND", 77_190_000), ("", None), (None, None)],
+)
+def test_seed_parse_amount(value, amount):
+    assert seed.parse_amount(value) == amount
+
+
+def test_seed_record_uses_vietnam_date_and_both_timestamp_formats():
+    doc = {"product_title": "iPhone 16 512GB", "capacity": "512 GB", "price_raw": "31590000.00",
+           "original_price": "35.790.000d", "part_number": "00911202", "url": "https://x",
+           "crawled_at": "2026-10-29T18:30:00+00:00"}
+    record = seed.to_record(doc, "fpt_shop")
+    assert (record["store"], record["product_id"], record["capacity"]) == ("FPT Shop", "00911202", "512gb")
+    assert (record["price"], record["original_price"]) == (31_590_000, 35_790_000)
+    assert record["crawl_date"] == "2026-10-30"
+    mongo_date = seed.to_record({**doc, "crawled_at": {"$date": "2026-10-01T02:00:00Z"}}, "fpt_shop")
+    assert mongo_date["crawl_date"] == "2026-10-01"
+    assert seed.to_record({**doc, "crawled_at": None}, "fpt_shop") is None
+
+
 def raw(name, price, product_id="p1", store="CellphoneS", **extra):
     return {"store": store, "product_id": product_id, "product_name": name, "price": price,
             "crawl_date": "2026-11-09", **extra}
@@ -105,6 +127,17 @@ def test_clean_records_rejects_with_reason_and_keeps_lowest_duplicate():
     assert [r["reason"] for r in rejected] == [
         "price_out_of_range", "missing_price", "out_of_scope_model", "not_new_vna", "unknown_capacity"
     ]
+
+
+def test_clean_records_quarantines_prices_far_from_market():
+    clean, rejected = clean_records([
+        raw("iPhone 15 128GB", 20_990_000, "a", "CellphoneS"),
+        raw("iPhone 15 128GB", 21_490_000, "b", "TGDD"),
+        raw("iPhone 15 128GB", 15_450_000, "c", "MobileCity"),
+        raw("iPhone 15 128GB", 115_190_000, "d", "TopZone"),
+    ])
+    assert sorted(r["store"] for r in clean) == ["CellphoneS", "MobileCity", "TGDD"]
+    assert [(r["reason"], r["record"]["store"]) for r in rejected] == [("price_far_from_market", "TopZone")]
 
 
 @pytest.mark.parametrize(

@@ -72,7 +72,9 @@ def latest_products(
                 store, product_id, crawl_date, product_name, model, capacity, color,
                 price, original_price, in_stock, url, product_match_key, data_origin
             FROM iphone_clean_products
-            WHERE (CAST(:store AS text) IS NULL OR store = :store)
+            -- Only the latest crawl day, so stores that are no longer crawled do not show stale prices.
+            WHERE crawl_date = (SELECT max(crawl_date) FROM iphone_clean_products)
+              AND (CAST(:store AS text) IS NULL OR store = :store)
               AND (CAST(:model AS text) IS NULL OR model = :model)
             ORDER BY store, product_id, crawl_date DESC
         ) latest
