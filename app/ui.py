@@ -48,7 +48,7 @@ def product_label(match_key: str) -> str:
 def series(match_key: str) -> str:
     """Product line used by the filter: 'iphone-16-pro-max-256gb' -> 'iPhone 16'."""
     generation = match_key.split("-")[1]
-    return "iPhone Air" if generation == "air" else f"iPhone {generation}"
+    return f"iPhone {generation.capitalize() if generation.isalpha() else generation}"
 
 
 def series_sort_key(name: str) -> tuple[int, str]:

@@ -2,7 +2,7 @@
 
 End-to-end price intelligence for iPhones sold by Vietnamese retailers. The project tracks competitor prices, measures where the reference retailer (FPT Shop) sits in the market, and raises alerts when prices move.
 
-> **Status:** infrastructure is in place. Crawlers, ETL, alerts and forecasting are still in progress, so the dashboard is empty until the first pipeline stages land.
+> **Status:** the daily pipeline crawls CellphoneS, Hoang Ha Mobile and MobileCity, cleans and loads the prices, computes market positions and raises alerts. FPT Shop is not crawled yet (see [Data sources](#data-sources)). Forecasting is in progress.
 
 ## Architecture
 
@@ -48,6 +48,30 @@ docker compose --profile jobs run --rm pipeline
 ```
 
 `docker compose down` stops the stack and keeps the data. Adding `-v` deletes both database volumes.
+
+## Pipeline
+
+`src/pipeline/run_all.py` runs these stages in order and records each run in `pipeline_runs`. A failing stage stops the run, so later stages never build on incomplete data. Every stage can be re-run on the same day without creating duplicates.
+
+| Stage | What it does | Writes |
+|---|---|---|
+| `crawl` | Fetches the iPhone listings of each store. One store failing does not stop the others. | `data/raw/<date>/products.jsonl`, MongoDB `raw_products` |
+| `clean_load` | Parses prices, keeps new VN/A iPhones from the 15 series on, builds `product_match_key` (model + capacity), keeps the lowest price per store product | `iphone_clean_products`, rejected rows with a reason in `iphone_quarantine` |
+| `analytics` | Market min, max, average and median per product and day, the gap to the median, a price index and one of six positions | `iphone_price_analytics` |
+| `alerts` | Price changes of 2% or more since the last crawl, and competitors that became cheaper than the reference store | `price_alerts` |
+
+Price changes need two crawl days, so the first run raises no alerts.
+
+## Data sources
+
+| Store | Method | Notes |
+|---|---|---|
+| CellphoneS | iPhone category page and one page per series | |
+| Hoang Ha Mobile | Paged iPhone category | One card per model at its default capacity |
+| MobileCity | Category, "Xem them" pages, then the variant list on each product page | One record per capacity, lowest price across colors |
+| FPT Shop | Not crawled | Every request, including `robots.txt`, gets a Cloudflare bot challenge. The crawler does not try to get around it. |
+
+Crawlers read `robots.txt`, wait at least 1.5 seconds between requests and stop when a site answers with a bot challenge.
 
 ## Local development
 
@@ -133,5 +157,5 @@ tests/       Automated tests
 
 - Secrets live in `.env`, which is never committed.
 - Crawled data and data supplied by the course stay out of this repository.
-- Crawlers respect `robots.txt`, collect public product data only, and run once a day with a delay between requests.
+- Crawlers respect `robots.txt` and bot challenges, collect public product data only, and run once a day with a delay between requests.
 - This project is for learning purposes.

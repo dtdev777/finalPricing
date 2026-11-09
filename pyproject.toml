@@ -5,7 +5,9 @@ description = "End-to-end iPhone price intelligence for the Vietnamese retail ma
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
     "fastapi",
+    "lxml>=6.1.3",
     "openai>=3.46.0",
     "pandas",
     "psycopg[binary]",

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 LOG_DIR = BASE_DIR / "logs"
+RAW_DIR = BASE_DIR / "data" / "raw"
 
 load_dotenv(BASE_DIR / ".env")
 
@@ -36,3 +37,7 @@ def mongo_uri() -> str:
     host = os.getenv("MONGO_HOST", "localhost")
     port = os.getenv("MONGO_PORT", "27017")
     return f"mongodb://{user}:{password}@{host}:{port}/?authSource=admin"
+
+
+def mongo_db() -> str:
+    return os.getenv("MONGO_DB", "pricing_raw")

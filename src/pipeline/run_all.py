@@ -4,10 +4,11 @@ import sys
 from collections.abc import Callable
 from datetime import date
 
-from pymongo import MongoClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, create_engine, text
 
-from config.settings import LOG_DIR, mongo_uri, postgres_url
+from config.settings import LOG_DIR, postgres_url
+from src.alerts import rules
+from src.pipeline import analytics, clean, crawl
 
 logger = logging.getLogger("pipeline")
 
@@ -24,13 +25,13 @@ def configure_logging() -> None:
     )
 
 
-def check_mongo() -> None:
-    with MongoClient(mongo_uri(), serverSelectionTimeoutMS=5000) as client:
-        client.admin.command("ping")
-
-
-STAGES: list[tuple[str, Callable[[], None]]] = [
-    ("check_mongo", check_mongo),
+# Each stage gets the database engine and the crawl date. A failing stage stops the run,
+# so later stages never build on incomplete data.
+STAGES: list[tuple[str, Callable[[Engine, date], None]]] = [
+    ("crawl", crawl.run),
+    ("clean_load", clean.run),
+    ("analytics", analytics.run),
+    ("alerts", rules.run),
 ]
 
 
@@ -43,11 +44,13 @@ def main() -> int:
             text("INSERT INTO pipeline_runs (status) VALUES ('running') RETURNING run_id")
         ).scalar_one()
 
-    status, message = "success", f"Completed {len(STAGES)} stage(s)"
+    # The container runs on Vietnam time, so this is the Vietnamese market day.
+    crawl_date = date.today()
+    status, message = "success", f"Completed {len(STAGES)} stage(s) for {crawl_date}"
     try:
         for name, stage in STAGES:
             logger.info("Starting stage %s", name)
-            stage()
+            stage(engine, crawl_date)
             logger.info("Finished stage %s", name)
     except Exception as exc:
         logger.exception("Pipeline failed")
