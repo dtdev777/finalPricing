@@ -7,7 +7,7 @@ from typing import Any
 from bs4 import BeautifulSoup
 
 from src.crawlers.base import Fetcher, now_utc
-from src.matching import in_scope, is_new_vna, parse_capacity, parse_model
+from src.matching import in_scope, is_new_vna, normalize_text, parse_capacity, parse_model
 
 STORE = "MobileCity"
 BASE_URL = "https://mobilecity.vn"
@@ -40,10 +40,15 @@ def parse_product(html: str, url: str, crawled_at: str) -> list[dict[str, Any]]:
         for item in soup.select("div.storage-item[data-storage_id]")
     }
     name, in_stock = product_name_and_stock(soup)
+    variants = json.loads(match.group(1))
+    # A new model may list a single price with no storage option. That price is the
+    # starting price, so it belongs to the smallest capacity in the spec table.
+    fallback = spec_capacities(soup)[:1] if len(variants) == 1 else []
 
     cheapest: dict[str, dict[str, Any]] = {}
-    for variant in json.loads(match.group(1)):
+    for variant in variants:
         capacity = parse_capacity(storages.get(variant.get("storage"), "") or variant.get("variant_text", ""))
+        capacity = capacity or (fallback[0] if fallback else None)
         price = variant.get("price")
         if not capacity or not price:
             continue
@@ -61,6 +66,18 @@ def parse_product(html: str, url: str, crawled_at: str) -> list[dict[str, Any]]:
                 "crawled_at": crawled_at,
             }
     return list(cheapest.values())
+
+
+def spec_capacities(soup: BeautifulSoup) -> list[str]:
+    """'Bo nho trong: 256-512GB, NVMe' -> ['256gb', '512gb'], smallest first."""
+    for row in soup.select("li, tr"):
+        text = normalize_text(row.get_text(" ", strip=True))
+        if not text.startswith("bo nho trong"):
+            continue
+        sizes = re.findall(r"(\d+)\s*(gb|tb)?", text.split(":", 1)[-1])
+        unit = next((unit for _, unit in sizes if unit), "gb")
+        return [f"{number}{size_unit or unit}" for number, size_unit in sizes if parse_capacity(f"{number}{size_unit or unit}")]
+    return []
 
 
 def product_name_and_stock(soup: BeautifulSoup) -> tuple[str, bool | None]:

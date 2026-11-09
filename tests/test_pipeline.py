@@ -74,6 +74,16 @@ def test_mobilecity_product_keeps_cheapest_color_per_capacity():
     assert mobilecity.wanted("iPhone 16e Chinh hang VN/A") and not mobilecity.wanted("iPhone 12 CPO Quoc te")
 
 
+def test_mobilecity_single_price_without_storage_uses_smallest_spec_capacity():
+    html = """
+    <h1>iPhone 18 Chinh hang</h1>
+    <ul><li>Bo nho trong (ROM): 256-512GB, NVMe</li></ul>
+    <script>let phone_variants = [{"id": 9, "phone_id": 3031, "storage": 0, "price": 25050000, "variant_text": ""}];
+    </script>"""
+    [item] = mobilecity.parse_product(html, "https://mobilecity.vn/x.html", NOW)
+    assert (item["product_id"], item["capacity"], item["price"]) == ("3031-256gb", "256gb", 25_050_000)
+
+
 def raw(name, price, product_id="p1", store="CellphoneS", **extra):
     return {"store": store, "product_id": product_id, "product_name": name, "price": price,
             "crawl_date": "2026-11-09", **extra}
