@@ -4,6 +4,8 @@ End-to-end price intelligence for iPhones sold by Vietnamese retailers. The proj
 
 > **Status:** the daily pipeline crawls CellphoneS, Hoang Ha Mobile and MobileCity, cleans and loads the prices, computes market positions and raises alerts. Price history from 8 September 2026 comes from the course's 8-store data. Forecasting is in progress.
 >
+> The final report, with results and recommendations, is in [docs/final_report.md](docs/final_report.md).
+>
 > The reference retailer was FPT Shop until FPT started blocking crawlers (see [Data sources](#data-sources)). CellphoneS replaced it because it can be crawled every day and has the longest clean history.
 
 ## Architecture
