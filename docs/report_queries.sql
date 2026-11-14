@@ -1,4 +1,4 @@
--- Queries behind every number in docs/final_report.md.
+-- Queries behind every number in the final report (Q1 to Q15).
 -- Run against the project database:
 --   docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < docs/report_queries.sql
 -- REPORT_DATE is the latest crawl day used in the report.
