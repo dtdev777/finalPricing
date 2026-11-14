@@ -1,6 +1,7 @@
 # iPhone Price Intelligence: Final Report
 
 Data Science Bootcamp: Pricing Intelligence, final project.
+Author: **Tiến Tạ**
 Data as of **13 November 2026**. Every number in this report comes from the project database through the queries in [report_queries.sql](report_queries.sql) (Q1 to Q15).
 
 > **Draft status.** The data pipeline, alerts, dashboard and AI assistant are finished and run every day. The price forecasting model (section 3.3) and the notebooks for data quality and EDA are still in progress, so section 3.3 describes the plan, not results.
